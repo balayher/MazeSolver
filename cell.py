@@ -1,16 +1,17 @@
 from graphics import Line, Point
 
 class Cell():
-    def __init__(self, window=None, left=True, right=True, top=True, bottom=True):
-        self.left_wall = left
-        self.right_wall = right
-        self.top_wall = top
-        self.bottom_wall = bottom
+    def __init__(self, window=None):
+        self.left_wall = True
+        self.right_wall = True
+        self.top_wall = True
+        self.bottom_wall = True
         self._x1 = None
         self._x2 = None
         self._y1 = None
         self._y2 = None
         self._win = window
+        self.visited = False
 
     def draw(self, x1, y1, x2, y2):
         if self._win is None:

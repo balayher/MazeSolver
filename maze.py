@@ -12,6 +12,7 @@ class Maze():
         cell_size_x,
         cell_size_y,
         win=None,
+        seed=None
     ):
         self._x1 = x1
         self._y1 = y1
@@ -21,8 +22,12 @@ class Maze():
         self._cell_size_y = cell_size_y
         self._win = win
         self._cells = []
+        if seed:
+            random.seed(seed)
         self._create_cells()
         self._break_entrance_and_exit()
+        self._break_walls_r(0,0)
+        self._reset_cells_visited()
 
     def _create_cells(self):
         for i in range(self._num_cols):
@@ -60,3 +65,113 @@ class Maze():
         j = self._num_rows - 1
         self._cells[i][j].bottom_wall = False
         self._draw_cell(i, j)
+
+    def _break_walls_r(self, i, j):
+        self._cells[i][j].visited = True
+        while True:
+            list_ij = []
+
+            # determining where to go next
+            # left wall
+            if i > 0:
+                if self._cells[i-1][j].visited == False:
+                    list_ij.append((i-1, j))
+            # right wall
+            if i < self._num_cols - 1:
+                if self._cells[i+1][j].visited == False:
+                    list_ij.append((i+1, j))
+            # top wall
+            if j > 0:
+                if self._cells[i][j-1].visited == False:
+                    list_ij.append((i, j-1))
+            # bottom wall
+            if j < self._num_rows - 1:
+                if self._cells[i][j+1].visited == False:
+                    list_ij.append((i, j+1))
+
+            # if no walls exit
+            if len(list_ij) == 0:
+                self._draw_cell(i, j)
+                return
+
+            # choose random direction
+            direction = random.randrange(len(list_ij))
+            x = list_ij[direction][0]
+            y = list_ij[direction][1]
+
+            #breaking walls
+            # left wall
+            if x < i:
+                self._cells[i][j].left_wall = False
+                self._draw_cell(i, j)
+                self._cells[x][j].right_wall = False
+                self._draw_cell(x, j)
+            # right wall
+            if x > i:
+                self._cells[i][j].right_wall = False
+                self._draw_cell(i, j)
+                self._cells[x][j].left_wall = False
+                self._draw_cell(x, j)
+            # top wall
+            if y < j:
+                self._cells[i][j].top_wall = False
+                self._draw_cell(i, j)
+                self._cells[i][y].bottom_wall = False
+                self._draw_cell(i, y)
+            # bottom wall
+            if y > j:
+                self._cells[i][j].bottom_wall = False
+                self._draw_cell(i, j)
+                self._cells[i][y].top_wall = False
+                self._draw_cell(x, j)
+
+            # to next cell
+            self._break_walls_r(x, y)
+
+    def _reset_cells_visited(self):
+        for i in range(self._num_cols):
+            for j in range(self._num_rows):
+                self._cells[i][j].visited = False
+
+    def solve(self):
+        return self._solve_r(0, 0)
+
+    def _solve_r(self, i, j):
+        self._animate()
+
+        # visiting current cell
+        self._cells[i][j].visited = True
+
+        # if this is end cell, we are done
+        if i == (self._num_cols -1) and j == (self._num_rows -1):
+            return True
+
+        # to move left
+        if self._cells[i][j].left_wall == False:
+            if self._cells[i-1][j].visited == False and self._cells[i-1][j].right_wall == False:
+                self._cells[i][j].draw_move(self._cells[i-1][j])
+                if self._solve_r(i-1, j) == True:
+                    return True
+                self._cells[i][j].draw_move(self._cells[i-1][j], True)
+        # to move right
+        if self._cells[i][j].right_wall == False:
+            if self._cells[i+1][j].visited == False and self._cells[i+1][j].left_wall == False:
+                self._cells[i][j].draw_move(self._cells[i+1][j])
+                if self._solve_r(i+1, j) == True:
+                    return True
+                self._cells[i][j].draw_move(self._cells[i+1][j], True)
+        # to move up
+        if self._cells[i][j].top_wall == False:
+            if self._cells[i][j-1].visited == False and self._cells[i][j-1].bottom_wall == False:
+                self._cells[i][j].draw_move(self._cells[i][j-1])
+                if self._solve_r(i, j-1) == True:
+                    return True
+                self._cells[i][j].draw_move(self._cells[i][j-1], True)
+        # to move down
+        if self._cells[i][j].bottom_wall == False:
+            if self._cells[i][j+1].visited == False and self._cells[i][j+1].top_wall == False:
+                self._cells[i][j].draw_move(self._cells[i][j+1])
+                if self._solve_r(i, j+1) == True:
+                    return True
+                self._cells[i][j].draw_move(self._cells[i][j+1], True)
+        return False
